@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
+import '../providers/theme_provider.dart';
 import '../models/transaction.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'settings_screen.dart';
 import '../main.dart';
 import 'package:fl_chart/fl_chart.dart';
 
@@ -50,6 +52,16 @@ class _HomeScreenState extends State<HomeScreen> {
               },
               tooltip: 'Use system theme',
             ),
+          IconButton(
+            icon: const Icon(Icons.settings),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+            tooltip: l10n.settings,
+          ),
         ],
       ),
       body: SafeArea(

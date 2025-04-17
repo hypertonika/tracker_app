@@ -18,5 +18,33 @@
     "category": "Category",
     "amountMustBeGreaterThanZero": "Amount must be greater than 0",
     "pleaseSelectCategory": "Please select a category",
-    "invalidAmountFormat": "Invalid amount format"
+    "invalidAmountFormat": "Invalid amount format",
+    "settings": "Settings",
+    "theme": "Theme",
+    "language": "Language",
+    "systemDefault": "System default",
+    "selectLanguage": "Select language",
+    "darkTheme": "Dark theme",
+    "lightTheme": "Light theme",
+    "@settings": {
+        "description": "Settings screen title"
+    },
+    "@theme": {
+        "description": "Theme selection"
+    },
+    "@language": {
+        "description": "Language selection"
+    },
+    "@systemDefault": {
+        "description": "System default option"
+    },
+    "@selectLanguage": {
+        "description": "Select language dialog title"
+    },
+    "@darkTheme": {
+        "description": "Dark theme option"
+    },
+    "@lightTheme": {
+        "description": "Light theme option"
+    }
 } 
