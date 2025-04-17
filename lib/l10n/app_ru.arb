@@ -1,0 +1,22 @@
+{
+    "appTitle": "Доходы и Расходы",
+    "welcome": "Добро пожаловать",
+    "addTransaction": "Добавить транзакцию",
+    "title": "Название",
+    "amount": "Сумма",
+    "type": "Тип",
+    "income": "Доход",
+    "expense": "Расход",
+    "cancel": "Отмена",
+    "add": "Добавить",
+    "pleaseEnterTitle": "Пожалуйста, введите название",
+    "pleaseEnterAmount": "Пожалуйста, введите сумму",
+    "pleaseEnterValidNumber": "Пожалуйста, введите корректное число",
+    "noTransactions": "Нет транзакций",
+    "recentTransactions": "Последние транзакции",
+    "monthlySummary": "Месячный отчет",
+    "category": "Категория",
+    "amountMustBeGreaterThanZero": "Сумма должна быть больше 0",
+    "pleaseSelectCategory": "Пожалуйста, выберите категорию",
+    "invalidAmountFormat": "Неверный формат суммы"
+} 

@@ -1,0 +1,22 @@
+{
+    "appTitle": "Income & Expenses",
+    "welcome": "Welcome",
+    "addTransaction": "Add Transaction",
+    "title": "Title",
+    "amount": "Amount",
+    "type": "Type",
+    "income": "Income",
+    "expense": "Expense",
+    "cancel": "Cancel",
+    "add": "Add",
+    "pleaseEnterTitle": "Please enter a title",
+    "pleaseEnterAmount": "Please enter an amount",
+    "pleaseEnterValidNumber": "Please enter a valid number",
+    "noTransactions": "No transactions",
+    "recentTransactions": "Recent Transactions",
+    "monthlySummary": "Monthly Summary",
+    "category": "Category",
+    "amountMustBeGreaterThanZero": "Amount must be greater than 0",
+    "pleaseSelectCategory": "Please select a category",
+    "invalidAmountFormat": "Invalid amount format"
+} 
