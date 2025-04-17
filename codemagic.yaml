@@ -2,7 +2,7 @@ workflows:
   ios-workflow:
     name: iOS Workflow
     instance_type: mac_mini_m1
-    max_build_duration: 60
+    max_build_duration: 120
     environment:
       ios_signing:
         distribution_type: app_store
@@ -10,18 +10,34 @@ workflows:
       vars:
         XCODE_WORKSPACE: "Runner.xcworkspace"
         XCODE_SCHEME: "Runner"
+        BUNDLE_ID: "com.yourdomain.tracker"
+        FLUTTER_VERSION: stable
       xcode: latest
       cocoapods: default
+      flutter: stable
+    cache:
+      cache_paths:
+        - $FLUTTER_ROOT/.pub-cache
+        - $HOME/.pub-cache
+        - $HOME/Library/Caches/CocoaPods
     scripts:
+      - name: Set up Flutter
+        script: |
+          flutter channel stable
+          flutter upgrade
+          flutter --version
+      - name: Get Flutter packages
+        script: |
+          flutter clean
+          flutter pub get
+      - name: Install CocoaPods dependencies
+        script: |
+          cd ios
+          pod repo update
+          pod install
       - name: Set up code signing settings
         script: |
           xcode-project use-profiles
-      - name: Get Flutter packages
-        script: |
-          flutter packages pub get
-      - name: Install pods
-        script: |
-          find . -name "Podfile" -execdir pod install \;
       - name: Flutter build iOS
         script: |
           flutter build ios --release --no-codesign
