@@ -15,10 +15,8 @@
     "noTransactions": "No transactions",
     "recentTransactions": "Recent Transactions",
     "monthlySummary": "Monthly Summary",
-    "category": "Category",
-    "amountMustBeGreaterThanZero": "Amount must be greater than 0",
-    "pleaseSelectCategory": "Please select a category",
-    "invalidAmountFormat": "Invalid amount format",
+    "tapToAdd": "Tap to add",
+    "swipeToDelete": "Swipe to delete",
     "settings": "Settings",
     "theme": "Theme",
     "language": "Language",
@@ -26,6 +24,10 @@
     "selectLanguage": "Select language",
     "darkTheme": "Dark theme",
     "lightTheme": "Light theme",
+    "category": "Category",
+    "amountMustBeGreaterThanZero": "Amount must be greater than zero",
+    "pleaseSelectCategory": "Please select a category",
+    "invalidAmountFormat": "Invalid amount format",
     "@settings": {
         "description": "Settings screen title"
     },

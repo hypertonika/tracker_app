@@ -15,8 +15,17 @@
     "noTransactions": "Нет транзакций",
     "recentTransactions": "Последние транзакции",
     "monthlySummary": "Месячный отчет",
+    "tapToAdd": "Нажмите, чтобы добавить",
+    "swipeToDelete": "Смахните для удаления",
+    "settings": "Настройки",
+    "theme": "Тема",
+    "language": "Язык",
+    "systemDefault": "Системная",
+    "selectLanguage": "Выберите язык",
+    "darkTheme": "Темная тема",
+    "lightTheme": "Светлая тема",
     "category": "Категория",
-    "amountMustBeGreaterThanZero": "Сумма должна быть больше 0",
+    "amountMustBeGreaterThanZero": "Сумма должна быть больше нуля",
     "pleaseSelectCategory": "Пожалуйста, выберите категорию",
     "invalidAmountFormat": "Неверный формат суммы"
 } 
