@@ -1,52 +1,12 @@
 workflows:
-  ios-workflow:
-    name: iOS Workflow
-    instance_type: mac_mini_m1
-    max_build_duration: 120
+  ios-release-no-shorebird:
+    name: iOS Release
     environment:
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.yourdomain.tracker
-      vars:
-        XCODE_WORKSPACE: "Runner.xcworkspace"
-        XCODE_SCHEME: "Runner"
-        BUNDLE_ID: "com.yourdomain.tracker"
-        FLUTTER_VERSION: stable
-      xcode: latest
-      cocoapods: default
       flutter: stable
-    cache:
-      cache_paths:
-        - $FLUTTER_ROOT/.pub-cache
-        - $HOME/.pub-cache
-        - $HOME/Library/Caches/CocoaPods
+      xcode: latest
     scripts:
-      - name: Set up Flutter
-        script: |
-          flutter channel stable
-          flutter upgrade
-          flutter --version
-      - name: Get Flutter packages
-        script: |
-          flutter clean
-          flutter pub get
-      - name: Install CocoaPods dependencies
-        script: |
-          cd ios
-          pod repo update
-          pod install
-      - name: Set up code signing settings
-        script: |
-          xcode-project use-profiles
-      - name: Flutter build iOS
-        script: |
-          flutter build ios --release --no-codesign
+      - flutter build ios --simulator
+      - mkdir -p build/ios/ipa
+      - zip -r build/ios/ipa/Runner.app.zip build/ios/iphonesimulator/Runner.app
     artifacts:
-      - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
-      - flutter_drive.log
-    publishing:
-      app_store_connect:
-        api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-        key_id: $APP_STORE_CONNECT_KEY_IDENTIFIER
-        issuer_id: $APP_STORE_CONNECT_ISSUER_ID 
+      - build/ios/ipa/Runner.app.zip
