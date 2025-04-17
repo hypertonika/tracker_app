@@ -5,7 +5,6 @@ import '../providers/theme_provider.dart';
 import '../models/transaction.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'settings_screen.dart';
-import '../main.dart';
 import 'package:fl_chart/fl_chart.dart';
 
 class HomeScreen extends StatefulWidget {
