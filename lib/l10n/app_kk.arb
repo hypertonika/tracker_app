@@ -27,5 +27,14 @@
     "category": "Санат",
     "amountMustBeGreaterThanZero": "Сома нөлден үлкен болуы керек",
     "pleaseSelectCategory": "Санатты таңдаңыз",
-    "invalidAmountFormat": "Соманың форматы дұрыс емес"
+    "invalidAmountFormat": "Соманың форматы дұрыс емес",
+    "home": "Басты бет",
+    "about": "Қосымша туралы",
+    "profile": "Профиль",
+    "food": "Тамақ",
+    "transport": "Көлік",
+    "shopping": "Сауда",
+    "bills": "Төлемдер",
+    "entertainment": "Ойын-сауық",
+    "salary": "Жалақы"
 } 

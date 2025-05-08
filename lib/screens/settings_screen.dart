@@ -31,16 +31,14 @@ class SettingsScreen extends StatelessWidget {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (!themeProvider.useSystemTheme) ...[
-                  IconButton(
-                    icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
-                    onPressed: () {
-                      themeProvider.toggleTheme();
-                    },
-                    tooltip: isDarkMode ? l10n.lightTheme : l10n.darkTheme,
-                  ),
-                  const SizedBox(width: 8),
-                ],
+                IconButton(
+                  icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
+                  onPressed: () {
+                    themeProvider.toggleTheme();
+                  },
+                  tooltip: isDarkMode ? l10n.lightTheme : l10n.darkTheme,
+                ),
+                const SizedBox(width: 8),
                 IconButton(
                   icon: const Icon(Icons.settings_brightness),
                   onPressed: () {

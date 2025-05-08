@@ -28,6 +28,12 @@
     "amountMustBeGreaterThanZero": "Amount must be greater than zero",
     "pleaseSelectCategory": "Please select a category",
     "invalidAmountFormat": "Invalid amount format",
+    "food": "Food",
+    "transport": "Transport",
+    "shopping": "Shopping",
+    "bills": "Bills",
+    "entertainment": "Entertainment",
+    "salary": "Salary",
     "@settings": {
         "description": "Settings screen title"
     },
@@ -48,5 +54,8 @@
     },
     "@lightTheme": {
         "description": "Light theme option"
-    }
+    },
+    "home": "Home",
+    "about": "About",
+    "profile": "Profile"
 } 

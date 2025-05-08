@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../services/user_prefs_service.dart';
 
 class LocaleProvider with ChangeNotifier {
   Locale? _locale;
@@ -12,11 +14,22 @@ class LocaleProvider with ChangeNotifier {
     _locale = locale;
     _useSystemLocale = false;
     notifyListeners();
+    _savePrefs();
   }
 
   void useSystemSettings() {
     _useSystemLocale = true;
     notifyListeners();
+    _savePrefs();
+  }
+
+  void _savePrefs() {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      final language = _useSystemLocale ? 'system' : _locale?.languageCode ?? 'system';
+      // Для темы используем 'system' (или можно получить из ThemeProvider)
+      UserPrefsService().savePrefs('system', language);
+    }
   }
 
   String getLanguageName(String code) {
@@ -29,6 +42,14 @@ class LocaleProvider with ChangeNotifier {
         return 'Қазақша';
       default:
         return 'System';
+    }
+  }
+
+  void setLocaleFromString(String code) {
+    if (code == 'system') {
+      useSystemSettings();
+    } else {
+      setLocale(Locale(code));
     }
   }
 } 

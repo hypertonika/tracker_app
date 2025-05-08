@@ -6,6 +6,7 @@ import '../models/transaction.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'settings_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -25,6 +26,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final themeProvider = context.watch<ThemeProvider>();
     final isSystemTheme = themeProvider.useSystemTheme;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
       appBar: AppBar(
@@ -64,62 +66,76 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: SafeArea(
-        child: OrientationBuilder(
-          builder: (context, orientation) {
-            final isLandscape = orientation == Orientation.landscape;
-            final screenWidth = MediaQuery.of(context).size.width;
-            final screenHeight = MediaQuery.of(context).size.height;
-            final isSmallScreen = screenWidth < 600;
-            final bottomPadding = MediaQuery.of(context).viewInsets.bottom + 120.0;
-
-            Widget content;
-            if (isLandscape) {
-              content = Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    width: screenWidth * 0.4,
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildBalanceCard(l10n),
-                          _buildMonthSelector(l10n),
-                          if (!isSmallScreen) _buildSummaryChart(l10n),
-                        ],
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: _buildRecentTransactions(l10n),
+        child: Column(
+          children: [
+            if (user == null)
+              MaterialBanner(
+                content: Text('Guest Mode: Please log in for full access.'),
+                backgroundColor: Colors.amber,
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pushNamed(context, '/login'),
+                    child: Text('Login'),
                   ),
                 ],
-              );
-            } else {
-              content = Column(
-                children: [
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          _buildBalanceCard(l10n),
-                          _buildMonthSelector(l10n),
-                          if (screenHeight > 600) _buildSummaryChart(l10n),
-                          _buildRecentTransactions(l10n),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              );
-            }
+              ),
+            Expanded(
+              child: OrientationBuilder(
+                builder: (context, orientation) {
+                  final isLandscape = orientation == Orientation.landscape;
+                  final screenWidth = MediaQuery.of(context).size.width;
+                  final screenHeight = MediaQuery.of(context).size.height;
+                  final isSmallScreen = screenWidth < 600;
+                  final bottomPadding = MediaQuery.of(context).viewInsets.bottom + 120.0;
 
-            return Padding(
-              padding: EdgeInsets.only(bottom: bottomPadding),
-              child: content,
-            );
-          },
+                  Widget content;
+                  if (isLandscape) {
+                    content = Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SizedBox(
+                          width: screenWidth * 0.4,
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildBalanceCard(l10n),
+                                _buildMonthSelector(l10n),
+                                if (!isSmallScreen) _buildSummaryChart(l10n),
+                              ],
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: _buildRecentTransactions(l10n),
+                        ),
+                      ],
+                    );
+                  } else {
+                    content = Column(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                _buildBalanceCard(l10n),
+                                _buildMonthSelector(l10n),
+                                if (screenHeight > 600) _buildSummaryChart(l10n),
+                                _buildRecentTransactions(l10n),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+
+                  return content;
+                },
+              ),
+            ),
+          ],
         ),
       ),
       floatingActionButton: Padding(
@@ -467,70 +483,72 @@ class _HomeScreenState extends State<HomeScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('${l10n.add} ${type == TransactionType.income ? l10n.income : l10n.expense}'),
-        content: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextFormField(
-                controller: titleController,
-                decoration: InputDecoration(labelText: l10n.title),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return l10n.pleaseEnterTitle;
-                  }
-                  return null;
-                },
-              ),
-              TextFormField(
-                controller: amountController,
-                decoration: InputDecoration(
-                  labelText: l10n.amount,
-                  prefixText: '₸ ',
+        content: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextFormField(
+                  controller: titleController,
+                  decoration: InputDecoration(labelText: l10n.title),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n.pleaseEnterTitle;
+                    }
+                    return null;
+                  },
                 ),
-                keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return l10n.pleaseEnterAmount;
-                  }
-                  final amount = double.tryParse(value);
-                  if (amount == null) {
-                    return l10n.pleaseEnterValidNumber;
-                  }
-                  if (amount <= 0) {
-                    return l10n.amountMustBeGreaterThanZero;
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                decoration: InputDecoration(labelText: l10n.category),
-                value: selectedCategory,
-                items: [
-                  'Food',
-                  'Transport',
-                  'Shopping',
-                  'Bills',
-                  'Entertainment',
-                  'Salary',
-                ].map((String value) {
-                  return DropdownMenuItem<String>(
-                    value: value,
-                    child: Text(value),
-                  );
-                }).toList(),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return l10n.pleaseSelectCategory;
-                  }
-                  return null;
-                },
-                onChanged: (String? newValue) {
-                  selectedCategory = newValue;
-                },
-              ),
-            ],
+                TextFormField(
+                  controller: amountController,
+                  decoration: InputDecoration(
+                    labelText: l10n.amount,
+                    prefixText: '₸ ',
+                  ),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n.pleaseEnterAmount;
+                    }
+                    final amount = double.tryParse(value);
+                    if (amount == null) {
+                      return l10n.pleaseEnterValidNumber;
+                    }
+                    if (amount <= 0) {
+                      return l10n.amountMustBeGreaterThanZero;
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                DropdownButtonFormField<String>(
+                  decoration: InputDecoration(labelText: l10n.category),
+                  value: selectedCategory,
+                  items: [
+                    l10n.food,
+                    l10n.transport,
+                    l10n.shopping,
+                    l10n.bills,
+                    l10n.entertainment,
+                    l10n.salary,
+                  ].map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return l10n.pleaseSelectCategory;
+                    }
+                    return null;
+                  },
+                  onChanged: (String? newValue) {
+                    selectedCategory = newValue;
+                  },
+                ),
+              ],
+            ),
           ),
         ),
         actions: [

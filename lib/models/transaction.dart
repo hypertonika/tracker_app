@@ -23,4 +23,24 @@ class Transaction {
 
   Color get color => type == TransactionType.income ? Colors.green : Colors.red;
   IconData get icon => type == TransactionType.income ? Icons.add : Icons.remove;
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'title': title,
+    'amount': amount,
+    'date': date.toIso8601String(),
+    'type': type.toString().split('.').last,
+    'category': category,
+    'description': description,
+  };
+
+  factory Transaction.fromJson(Map<String, dynamic> json) => Transaction(
+    id: json['id'],
+    title: json['title'],
+    amount: (json['amount'] as num).toDouble(),
+    date: DateTime.parse(json['date']),
+    type: json['type'] == 'income' ? TransactionType.income : TransactionType.expense,
+    category: json['category'],
+    description: json['description'],
+  );
 } 

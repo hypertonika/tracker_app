@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/category.dart';
 import '../models/budget.dart';
+import '../services/user_prefs_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class TransactionProvider with ChangeNotifier {
   final List<Transaction> _transactions = [];
@@ -25,11 +27,15 @@ class TransactionProvider with ChangeNotifier {
   void addTransaction(Transaction transaction) {
     _transactions.add(transaction);
     notifyListeners();
+    _saveGuestIfNeeded();
+    _saveUserIfNeeded();
   }
 
   void removeTransaction(String id) {
     _transactions.removeWhere((transaction) => transaction.id == id);
     notifyListeners();
+    _saveGuestIfNeeded();
+    _saveUserIfNeeded();
   }
 
   void addBudget(Budget budget) {
@@ -53,5 +59,25 @@ class TransactionProvider with ChangeNotifier {
     }
     
     return categoryExpenses;
+  }
+
+  void clearAndLoad(List<Transaction> transactions) {
+    _transactions.clear();
+    _transactions.addAll(transactions);
+    notifyListeners();
+  }
+
+  Future<void> _saveGuestIfNeeded() async {
+    // Сохраняем только если пользователь не авторизован (гостевой режим)
+    if (FirebaseAuth.instance.currentUser == null) {
+      await UserPrefsService().saveGuestData(_transactions, 'system', 'system');
+    }
+  }
+
+  Future<void> _saveUserIfNeeded() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await UserPrefsService().saveTransactionsToFirestore(user.uid, _transactions);
+    }
   }
 } 

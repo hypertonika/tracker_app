@@ -27,5 +27,14 @@
     "category": "Категория",
     "amountMustBeGreaterThanZero": "Сумма должна быть больше нуля",
     "pleaseSelectCategory": "Пожалуйста, выберите категорию",
-    "invalidAmountFormat": "Неверный формат суммы"
+    "invalidAmountFormat": "Неверный формат суммы",
+    "home": "Главная",
+    "about": "О приложении",
+    "profile": "Профиль",
+    "food": "Еда",
+    "transport": "Транспорт",
+    "shopping": "Покупки",
+    "bills": "Счета",
+    "entertainment": "Развлечения",
+    "salary": "Зарплата"
 } 
