@@ -40,6 +40,8 @@ post_install do |installer|
     
     # Start of the permission-specific settings
     target.build_configurations.each do |config|
+      # Exclude arm64 for simulator to fix build on Apple Silicon
+      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
       # You can enable the permissions needed here
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
         '$(inherited)',
