@@ -7,6 +7,8 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'settings_screen.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../services/connectivity_service.dart';
+import '../services/offline_storage_service.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -27,6 +29,8 @@ class _HomeScreenState extends State<HomeScreen> {
     final isSystemTheme = themeProvider.useSystemTheme;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final user = FirebaseAuth.instance.currentUser;
+    final connectivityService = context.read<ConnectivityService>();
+    final offlineStorageService = OfflineStorageService();
 
     return Scaffold(
       appBar: AppBar(
@@ -62,6 +66,32 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             },
             tooltip: l10n.settings,
+          ),
+          StreamBuilder<bool>(
+            stream: connectivityService.connectionStatus,
+            builder: (context, snapshot) {
+              final isConnected = snapshot.data ?? false;
+              return IconButton(
+                icon: Icon(isConnected ? Icons.cloud_done : Icons.cloud_off),
+                onPressed: () {
+                  if (isConnected) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Syncing data...')),
+                    );
+                    offlineStorageService.syncWithFirestore('user_id').then((_) {
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Data synced successfully!')),
+                      );
+                    });
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('You are offline. Data will sync when connected.')),
+                    );
+                  }
+                },
+              );
+            },
           ),
         ],
       ),

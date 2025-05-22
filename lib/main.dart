@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'providers/transaction_provider.dart';
@@ -14,6 +13,8 @@ import 'services/auth_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/profile_screen.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'services/connectivity_service.dart';
 
 class GuestModeProvider with ChangeNotifier {
   bool _isGuest = false;
@@ -27,14 +28,16 @@ class GuestModeProvider with ChangeNotifier {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await Hive.initFlutter();
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
-        Provider(create: (_) => AuthService()),
         ChangeNotifierProvider(create: (_) => GuestModeProvider()),
+        Provider(create: (_) => AuthService()),
+        Provider(create: (_) => ConnectivityService()),
       ],
       child: const MyApp(),
     ),
@@ -46,35 +49,35 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final localeProvider = context.watch<LocaleProvider>();
-
-    return MaterialApp(
-      title: 'Income & Expenses',
-      theme: ThemeData.light(useMaterial3: true),
-      darkTheme: ThemeData.dark(useMaterial3: true),
-      themeMode: themeProvider.themeMode,
-      locale: localeProvider.locale,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => TransactionProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => LocaleProvider()),
+        ChangeNotifierProvider(create: (_) => GuestModeProvider()),
+        Provider(create: (_) => AuthService()),
+        Provider(create: (_) => ConnectivityService()),
       ],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('ru'),
-        Locale('kk'),
-      ],
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const AuthGate(),
-        '/home': (context) => const HomeScreen(),
-        '/settings': (context) => const SettingsScreen(),
-        '/about': (context) => const AboutScreen(),
-        '/login': (context) => const LoginScreen(),
-        '/register': (context) => const RegisterScreen(),
-      },
+      child: Consumer2<ThemeProvider, LocaleProvider>(
+        builder: (context, themeProvider, localeProvider, _) {
+          return MaterialApp(
+            title: 'Tracker',
+            theme: themeProvider.themeData,
+            locale: localeProvider.locale,
+            localizationsDelegates: localeProvider.localizationsDelegates,
+            supportedLocales: localeProvider.supportedLocales,
+            initialRoute: '/',
+            routes: {
+              '/': (context) => const RootNavigation(),
+              '/login': (context) => const LoginScreen(),
+              '/register': (context) => const RegisterScreen(),
+              '/profile': (context) => const ProfileScreen(),
+              '/settings': (context) => const SettingsScreen(),
+              '/about': (context) => const AboutScreen(),
+            },
+          );
+        },
+      ),
     );
   }
 }

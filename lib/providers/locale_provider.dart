@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/user_prefs_service.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 class LocaleProvider with ChangeNotifier {
   Locale? _locale;
@@ -9,6 +11,19 @@ class LocaleProvider with ChangeNotifier {
   Locale? get locale => _useSystemLocale ? null : _locale;
   bool get useSystemLocale => _useSystemLocale;
   String get currentLanguage => _locale?.languageCode ?? 'system';
+
+  List<LocalizationsDelegate<dynamic>> get localizationsDelegates => const [
+    AppLocalizations.delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+  ];
+
+  List<Locale> get supportedLocales => const [
+    Locale('en'),
+    Locale('ru'),
+    Locale('kk'),
+  ];
 
   void setLocale(Locale locale) {
     _locale = locale;
