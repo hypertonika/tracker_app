@@ -7,6 +7,7 @@ import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/transaction.dart' as mymodel;
+import '../main.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -53,11 +54,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 _loading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
-                        onPressed: _register,
+                        onPressed: _loading ? null : _register,
                         child: const Text('Register'),
                       ),
                 TextButton(
-                  onPressed: () => Navigator.pushReplacementNamed(context, '/login'),
+                  onPressed: _loading ? null : () => Navigator.pushReplacementNamed(context, '/login'),
                   child: const Text('Already have an account? Login'),
                 ),
               ],
@@ -89,7 +90,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               .map((e) => e is mymodel.Transaction ? e : mymodel.Transaction.fromJson(Map<String, dynamic>.from(e)))
               .toList();
         }
-        print('DEBUG: guestData transactions on register: $guestTx');
         // Сохраняем тему и язык
         await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
           'theme': guestData['theme'] ?? 'system',
@@ -102,11 +102,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
         context.read<TransactionProvider>().clearAndLoad(guestTx);
         context.read<ThemeProvider>().setThemeFromString(guestData['theme'] ?? 'system');
         context.read<LocaleProvider>().setLocaleFromString(guestData['language'] ?? 'system');
+        context.read<GuestModeProvider>().setGuest(false);
       }
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/');
     } catch (e) {
       setState(() => _error = e.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Registration failed: $e')),
+      );
     } finally {
       setState(() => _loading = false);
     }

@@ -86,7 +86,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   final screenWidth = MediaQuery.of(context).size.width;
                   final screenHeight = MediaQuery.of(context).size.height;
                   final isSmallScreen = screenWidth < 600;
-                  final bottomPadding = MediaQuery.of(context).viewInsets.bottom + 120.0;
 
                   Widget content;
                   if (isLandscape) {

@@ -121,25 +121,35 @@ class _RootNavigationState extends State<RootNavigation> {
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
     final l10n = AppLocalizations.of(context)!;
+    final isGuest = context.watch<GuestModeProvider>().isGuest;
     final pages = [
       const HomeScreen(),
       const AboutScreen(),
-      if (user != null) const ProfileScreen(),
-      const SettingsScreen(),
+      if (user != null && !isGuest) const ProfileScreen(),
+      if (!isGuest) const SettingsScreen(),
     ];
     final items = [
       BottomNavigationBarItem(icon: Icon(Icons.home), label: l10n.home),
       BottomNavigationBarItem(icon: Icon(Icons.info_outline), label: l10n.about),
-      if (user != null)
+      if (user != null && !isGuest)
         BottomNavigationBarItem(icon: Icon(Icons.person), label: l10n.profile),
-      BottomNavigationBarItem(icon: Icon(Icons.settings), label: l10n.settings),
+      if (!isGuest)
+        BottomNavigationBarItem(icon: Icon(Icons.settings), label: l10n.settings),
     ];
-
     return Scaffold(
       body: pages[_selectedIndex],
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
-        onTap: (i) => setState(() => _selectedIndex = i),
+        onTap: (i) {
+          // Если гость пытается перейти на приватные вкладки
+          if (isGuest && (i == 2 || i == 3)) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Please log in to access this feature')),
+            );
+            return;
+          }
+          setState(() => _selectedIndex = i);
+        },
         items: items,
         type: BottomNavigationBarType.fixed,
       ),

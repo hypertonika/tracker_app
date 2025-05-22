@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import '../main.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -13,6 +14,19 @@ class SettingsScreen extends StatelessWidget {
     final themeProvider = context.watch<ThemeProvider>();
     final localeProvider = context.watch<LocaleProvider>();
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final isGuest = Provider.of<GuestModeProvider>(context, listen: false).isGuest;
+
+    if (isGuest) {
+      Future.microtask(() {
+        if (!context.mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please log in to access this feature')),
+        );
+      });
+      return const Scaffold(
+        body: Center(child: Text('Not available for guests')),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(

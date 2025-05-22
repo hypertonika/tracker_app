@@ -7,7 +7,6 @@ import '../providers/transaction_provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/transaction.dart' as mymodel;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -54,18 +53,20 @@ class _LoginScreenState extends State<LoginScreen> {
                 _loading
                     ? const CircularProgressIndicator()
                     : ElevatedButton(
-                        onPressed: _login,
+                        onPressed: _loading ? null : _login,
                         child: const Text('Login'),
                       ),
                 TextButton(
-                  onPressed: () => Navigator.pushNamed(context, '/register'),
+                  onPressed: _loading ? null : () => Navigator.pushNamed(context, '/register'),
                   child: const Text('No account? Register'),
                 ),
                 TextButton(
-                  onPressed: () {
-                    context.read<GuestModeProvider>().setGuest(true);
-                    Navigator.pushReplacementNamed(context, '/');
-                  },
+                  onPressed: _loading
+                      ? null
+                      : () {
+                          context.read<GuestModeProvider>().setGuest(true);
+                          Navigator.pushReplacementNamed(context, '/');
+                        },
                   child: const Text('Continue as Guest'),
                 ),
               ],
@@ -90,7 +91,6 @@ class _LoginScreenState extends State<LoginScreen> {
         final data = doc.data() ?? {};
         final userPrefsService = UserPrefsService();
         final transactions = await userPrefsService.loadTransactionsFromFirestore(user.uid);
-        print('DEBUG: loaded transactions from Firestore on login: \\${transactions}');
         final theme = data['theme'] ?? 'system';
         final language = data['language'] ?? 'system';
         await userPrefsService.clearGuestData();
@@ -98,11 +98,15 @@ class _LoginScreenState extends State<LoginScreen> {
         context.read<TransactionProvider>().clearAndLoad(transactions);
         context.read<ThemeProvider>().setThemeFromString(theme);
         context.read<LocaleProvider>().setLocaleFromString(language);
+        context.read<GuestModeProvider>().setGuest(false);
       }
       if (!mounted) return;
       Navigator.pushReplacementNamed(context, '/');
     } catch (e) {
       setState(() => _error = e.toString());
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Login failed: $e')),
+      );
     } finally {
       setState(() => _loading = false);
     }
