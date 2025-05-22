@@ -54,4 +54,12 @@ class ThemeProvider with ChangeNotifier {
     }
     notifyListeners();
   }
+
+  ThemeData get themeData {
+    if (_useSystemTheme) {
+      // Use system theme
+      return ThemeData.fallback();
+    }
+    return _themeMode == ThemeMode.dark ? ThemeData.dark() : ThemeData.light();
+  }
 } 
