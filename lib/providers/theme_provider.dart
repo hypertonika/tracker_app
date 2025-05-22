@@ -6,40 +6,28 @@ class ThemeProvider with ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.system;
   bool _useSystemTheme = true;
 
-  ThemeMode get themeMode => _themeMode;
+  ThemeMode get themeMode => _useSystemTheme ? ThemeMode.system : _themeMode;
   bool get useSystemTheme => _useSystemTheme;
 
-  ThemeData get themeData {
-    switch (_themeMode) {
-      case ThemeMode.light:
-        return ThemeData.light(useMaterial3: true);
-      case ThemeMode.dark:
-        return ThemeData.dark(useMaterial3: true);
-      case ThemeMode.system:
-        return ThemeData.light(useMaterial3: true);
-    }
-  }
-
   void toggleTheme() {
-    if (_themeMode == ThemeMode.light) {
-      _themeMode = ThemeMode.dark;
-    } else {
+    if (_useSystemTheme) {
+      _useSystemTheme = false;
       _themeMode = ThemeMode.light;
+    } else {
+      _themeMode = _themeMode == ThemeMode.light ? ThemeMode.dark : ThemeMode.light;
     }
-    _useSystemTheme = false;
     notifyListeners();
     _savePrefs();
   }
 
   void setThemeMode(ThemeMode mode) {
     _themeMode = mode;
-    _useSystemTheme = mode == ThemeMode.system;
+    _useSystemTheme = false;
     notifyListeners();
     _savePrefs();
   }
 
   void useSystemSettings() {
-    _themeMode = ThemeMode.system;
     _useSystemTheme = true;
     notifyListeners();
     _savePrefs();
