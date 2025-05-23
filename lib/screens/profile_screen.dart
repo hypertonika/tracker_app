@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
+import '../providers/transaction_provider.dart';
 import '../services/auth_service.dart';
 import '../main.dart';
 
@@ -127,6 +128,11 @@ class ProfileScreen extends StatelessWidget {
             icon: const Icon(Icons.logout),
             label: const Text('Logout'),
             onPressed: () async {
+              context.read<TransactionProvider>().clearAndLoad([]);
+              context.read<ThemeProvider>().useSystemSettings();
+              context.read<LocaleProvider>().useSystemSettings();
+              context.read<GuestModeProvider>().setGuest(false);
+              
               await context.read<AuthService>().signOut();
               if (!context.mounted) return;
               Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);

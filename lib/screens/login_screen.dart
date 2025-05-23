@@ -63,8 +63,18 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextButton(
                   onPressed: _loading
                       ? null
-                      : () {
+                      : () async {
+                          // Очищаем данные перед входом в гостевой режим
+                          final userPrefsService = UserPrefsService();
+                          await userPrefsService.clearGuestData();
+                          
+                          if (!mounted) return;
+                          context.read<TransactionProvider>().clearAndLoad([]);
+                          context.read<ThemeProvider>().useSystemSettings();
+                          context.read<LocaleProvider>().useSystemSettings();
                           context.read<GuestModeProvider>().setGuest(true);
+                          
+                          if (!mounted) return;
                           Navigator.pushReplacementNamed(context, '/');
                         },
                   child: const Text('Continue as Guest'),

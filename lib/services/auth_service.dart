@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'user_prefs_service.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -18,6 +19,9 @@ class AuthService {
   }
 
   Future<void> signOut() async {
+    // Очищаем данные пользователя перед выходом
+    final userPrefsService = UserPrefsService();
+    await userPrefsService.clearGuestData();
     await _auth.signOut();
   }
 } 
