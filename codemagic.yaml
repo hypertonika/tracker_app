@@ -17,6 +17,10 @@ workflows:
           pod --version
           echo "Checking xcodeproj version"
           gem list xcodeproj
+      - name: Downgrade xcodeproj
+        script: |
+          gem uninstall xcodeproj
+          gem install xcodeproj --version=1.25.0
       - name: Install iOS dependencies
         script: |
           cd ios
