@@ -38,31 +38,21 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     
-    # Устанавливаем минимальную версию развертывания iOS для всех таргетов подов на 13.0
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
       
       # Fix for BoringSSL-GRPC compilation
       if target.name == 'BoringSSL-GRPC'
+        # Reset all compiler flags
+        config.build_settings['OTHER_CFLAGS'] = '-Wno-shorten-64-to-32 -Wno-error=implicit-function-declaration'
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '-Wno-shorten-64-to-32 -Wno-error=implicit-function-declaration'
         config.build_settings['GCC_OPTIMIZATION_LEVEL'] = '0'
         config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
-
-        # Remove -G flag and add necessary flags
-        current_cflags = config.build_settings['OTHER_CFLAGS'] || ''
-        config.build_settings['OTHER_CFLAGS'] = "#{current_cflags} -Wno-shorten-64-to-32".gsub(/-G\s*/, '').strip
-
-        current_cplusplusflags = config.build_settings['OTHER_CPLUSPLUSFLAGS'] || ''
-        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = "#{current_cplusplusflags} -Wno-shorten-64-to-32".gsub(/-G\s*/, '').strip
-
-        # Add additional compiler flags to fix the issue
-        config.build_settings['OTHER_CFLAGS'] = "#{config.build_settings['OTHER_CFLAGS']} -Wno-error=implicit-function-declaration"
-        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = "#{config.build_settings['OTHER_CPLUSPLUSFLAGS']} -Wno-error=implicit-function-declaration"
-
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= []
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << '$(inherited)'
+        
+        # Add necessary preprocessor definitions
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
         config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'OPENSSL_NO_ASM=1'
         config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'].uniq
-
       end
     end
 
