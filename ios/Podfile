@@ -17,7 +17,7 @@ def flutter_root
   end
 
   File.foreach(generated_xcode_build_settings_path) do |line|
-    matches = line.match(/FLUTTER_ROOT\=(.*)/)
+    matches = line.match(/FLUTTER_ROOT=(.*)/)
     return matches[1].strip if matches
   end
   raise "FLUTTER_ROOT not found in #{generated_xcode_build_settings_path}. Try deleting Generated.xcconfig, then run flutter pub get"
@@ -46,16 +46,19 @@ post_install do |installer|
       if target.name == 'BoringSSL-GRPC'
         config.build_settings['GCC_OPTIMIZATION_LEVEL'] = '0'
         config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
-        config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-shorten-64-to-32'
-        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '$(inherited) -Wno-shorten-64-to-32'
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)', 'OPENSSL_NO_ASM=1']
 
-        # Remove the unsupported -G flag
-        xcconfig_path = config.class.filepath(config.name)
-        xcconfig = File.read(xcconfig_path)
-        File.open(xcconfig_path, "w") do |file|
-          file.puts xcconfig.gsub('-G', '')
-        end
+        # Get current flags, append new flag, and remove -G
+        current_cflags = config.build_settings['OTHER_CFLAGS'] || ''
+        config.build_settings['OTHER_CFLAGS'] = "#{current_cflags} -Wno-shorten-64-to-32".gsub('-G ', '').strip
+
+        current_cplusplusflags = config.build_settings['OTHER_CPLUSPLUSFLAGS'] || ''
+        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = "#{current_cplusplusflags} -Wno-shorten-64-to-32".gsub('-G ', '').strip
+
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= []
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << '$(inherited)'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'OPENSSL_NO_ASM=1'
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'].uniq
+
       end
     end
 
