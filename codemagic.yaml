@@ -22,8 +22,8 @@ workflows:
       # - name: Generate localization files
       #   script: |
       #     flutter gen-l10n
-      # - flutter build ios --simulator # Удаляем дублирующийся build шаг
-      # - mkdir -p build/ios/ipa # Оставляем эти шаги для упаковки
-      # - zip -r build/ios/ipa/Runner.app.zip build/ios/iphonesimulator/Runner.app # Оставляем эти шаги для упаковки
+      # - flutter build ios --release --no-codesign # Комментируем релизный билд
+      - mkdir -p build/ios/ipa # Шаги для упаковки
+      - zip -r build/ios/ipa/Runner.app.zip build/ios/iphonesimulator/Runner.app # Шаги для упаковки
     artifacts:
       - build/ios/ipa/Runner.app.zip
