@@ -62,6 +62,17 @@ post_install do |installer|
       end
     end
 
+    # Fix for BoringSSL-GRPC compilation by removing -G flag from source files
+    if target.name == 'BoringSSL-GRPC'
+      target.source_build_phase.files.each do |file|
+        if file.settings && file.settings['COMPILER_FLAGS']
+          flags = file.settings['COMPILER_FLAGS'].split(' ')
+          flags.reject! { |flag| flag == '-G' }
+          file.settings['COMPILER_FLAGS'] = flags.join(' ')
+        end
+      end
+    end
+
     # Start of the permission-specific settings
     target.build_configurations.each do |config|
       # Exclude arm64 for simulator to fix build on Apple Silicon
