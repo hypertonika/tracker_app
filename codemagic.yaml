@@ -11,6 +11,12 @@ workflows:
       - name: Get Flutter dependencies
         script: |
           flutter pub get
+      - name: Check CocoaPods and xcodeproj versions
+        script: |
+          echo "Checking CocoaPods version"
+          pod --version
+          echo "Checking xcodeproj version"
+          gem list xcodeproj
       - name: Install iOS dependencies
         script: |
           cd ios
