@@ -35,30 +35,33 @@ target 'Runner' do
 end
 
 post_install do |installer|
-  # Apply general settings to all targets
+  # Apply general settings to all targets that are PBXNativeTarget
   installer.pods_project.targets.each do |target|
-    flutter_additional_ios_build_settings(target)
+    # Only apply settings to native targets
+    if target.is_a?(Xcodeproj::Project::Object::PBXNativeTarget)
+      flutter_additional_ios_build_settings(target)
 
-    target.build_configurations.each do |config|
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      target.build_configurations.each do |config|
+        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
 
-      # Exclude arm64 for simulator to fix build on Apple Silicon
-      config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
-      # You can enable the permissions needed here
-      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
-        '$(inherited)',
-        'PERMISSION_CAMERA=1',
-        'PERMISSION_PHOTOS=1',
-        'PERMISSION_LOCATION=1',
-      ]
+        # Exclude arm64 for simulator to fix build on Apple Silicon
+        config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+        # You can enable the permissions needed here
+        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+          '$(inherited)',
+          'PERMISSION_CAMERA=1',
+          'PERMISSION_PHOTOS=1',
+          'PERMISSION_LOCATION=1',
+        ]
+      end
     end
   end
 
   # Find the BoringSSL-GRPC target
   boringssl_grpc_target = installer.pods_project.targets.find { |target| target.name == 'BoringSSL-GRPC' }
 
-  # Apply fixes specifically to the BoringSSL-GRPC target if found
-  if boringssl_grpc_target
+  # Apply fixes specifically to the BoringSSL-GRPC target if found and if it is a PBXNativeTarget
+  if boringssl_grpc_target && boringssl_grpc_target.is_a?(Xcodeproj::Project::Object::PBXNativeTarget)
     boringssl_grpc_target.build_configurations.each do |config|
       # Reset all compiler flags and add only necessary ones
       config.build_settings['OTHER_CFLAGS'] = '-Wno-shorten-64-to-32 -Wno-error=implicit-function-declaration -Wno-everything'
