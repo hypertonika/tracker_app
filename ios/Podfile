@@ -38,6 +38,11 @@ post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     
+    # Устанавливаем минимальную версию развертывания iOS для всех таргетов подов на 13.0
+    target.build_configurations.each do |config|
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+    end
+
     # Start of the permission-specific settings
     target.build_configurations.each do |config|
       # Exclude arm64 for simulator to fix build on Apple Silicon
