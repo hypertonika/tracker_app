@@ -53,6 +53,14 @@ post_install do |installer|
           'PERMISSION_PHOTOS=1',
           'PERMISSION_LOCATION=1',
         ]
+
+        # Add Flutter include paths to sqflite_darwin target
+        if target.name == 'sqflite_darwin'
+          config.build_settings['HEADER_SEARCH_PATHS'] ||= '$(inherited)'
+          config.build_settings['HEADER_SEARCH_PATHS'] = "$(inherited) \"${PODS_ROOT}/Flutter/"\n          config.build_settings['OTHER_CFLAGS'] ||= '$(inherited)'
+          config.build_settings['OTHER_CFLAGS'] = "$(inherited) -I\"${PODS_ROOT}/Flutter/"\n          config.build_settings['OTHER_CPLUSPLUSFLAGS'] ||= '$(inherited)'
+          config.build_settings['OTHER_CPLUSPLUSFLAGS'] = "$(inherited) -I\"${PODS_ROOT}/Flutter/"\n        end
+
       end
     end
   end
