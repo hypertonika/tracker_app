@@ -9,10 +9,18 @@ class TransactionProvider with ChangeNotifier {
   final List<Transaction> _transactions = [];
   final List<Budget> _budgets = [];
   final List<Category> _categories = Category.defaultCategories;
+  final UserPrefsService _userPrefsService = UserPrefsService();
 
   List<Transaction> get transactions => _transactions;
   List<Budget> get budgets => _budgets;
   List<Category> get categories => _categories;
+
+  TransactionProvider() {
+    _initTransactions();
+    FirebaseAuth.instance.authStateChanges().listen((user) {
+      _initTransactions();
+    });
+  }
 
   double get totalIncome => _transactions
       .where((t) => t.type == TransactionType.income)
@@ -67,17 +75,32 @@ class TransactionProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> _initTransactions() async {
+    final user = FirebaseAuth.instance.currentUser;
+    List<Transaction> loadedTransactions = [];
+
+    if (user != null) {
+      loadedTransactions = await _userPrefsService.loadTransactionsFromFirestore(user.uid);
+    } else {
+      final guestData = await _userPrefsService.loadGuestData();
+      loadedTransactions = guestData['transactions'] as List<Transaction>;
+    }
+
+    _transactions.clear();
+    _transactions.addAll(loadedTransactions);
+    notifyListeners();
+  }
+
   Future<void> _saveGuestIfNeeded() async {
-    // Сохраняем только если пользователь не авторизован (гостевой режим)
     if (FirebaseAuth.instance.currentUser == null) {
-      await UserPrefsService().saveGuestData(_transactions, 'system', 'system');
+      await _userPrefsService.saveGuestData(_transactions, 'system', 'system');
     }
   }
 
   Future<void> _saveUserIfNeeded() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      await UserPrefsService().saveTransactionsToFirestore(user.uid, _transactions);
+      await _userPrefsService.saveTransactionsToFirestore(user.uid, _transactions);
     }
   }
 } 

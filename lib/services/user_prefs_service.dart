@@ -7,11 +7,14 @@ import 'dart:convert';
 class UserPrefsService {
   final _firestore = FirebaseFirestore.instance;
 
-  Future<void> savePrefs(String theme, String language) async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-    await _firestore.collection('users').doc(user.uid).set({
+  Future<void> saveThemeToFirestore(String uid, String theme) async {
+    await _firestore.collection('users').doc(uid).set({
       'theme': theme,
+    }, SetOptions(merge: true));
+  }
+
+  Future<void> saveLanguageToFirestore(String uid, String language) async {
+    await _firestore.collection('users').doc(uid).set({
       'language': language,
     }, SetOptions(merge: true));
   }
@@ -61,17 +64,27 @@ class UserPrefsService {
     await prefs.remove('guest_language');
   }
 
+  Future<void> saveGuestTheme(String theme) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('guest_theme', theme);
+  }
+
+  Future<void> saveGuestLanguage(String language) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('guest_language', language);
+  }
+
   // --- Firestore user transactions ---
   Future<void> saveTransactionsToFirestore(String uid, List<mymodel.Transaction> transactions) async {
     final batch = _firestore.batch();
     final userRef = _firestore.collection('users').doc(uid);
     final txRef = userRef.collection('transactions');
-    // Удаляем старые транзакции
-    final old = await txRef.get();
-    for (final doc in old.docs) {
-      batch.delete(doc.reference);
-    }
-    // Добавляем новые
+    // Удаляем старые транзакции (временно комментируем для тестирования)
+    // final old = await txRef.get();
+    // for (final doc in old.docs) {
+    //   batch.delete(doc.reference);
+    // }
+    // Добавляем новые (или обновляем существующие с тем же ID)
     for (final t in transactions) {
       batch.set(txRef.doc(t.id), t.toJson());
     }

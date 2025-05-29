@@ -7,7 +7,7 @@ class AboutScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('About'),
+        title: const Text('About'),
       ),
       body: Center(
         child: Padding(

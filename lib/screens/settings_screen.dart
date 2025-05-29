@@ -2,86 +2,91 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/theme_provider.dart';
 import '../providers/locale_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import '../main.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final themeProvider = context.watch<ThemeProvider>();
-    final localeProvider = context.watch<LocaleProvider>();
+    final localeProvider = Provider.of<LocaleProvider>(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final t = localeProvider.translations;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final isGuest = Provider.of<GuestModeProvider>(context, listen: false).isGuest;
-
-    if (isGuest) {
-      Future.microtask(() {
-        if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please log in to access this feature')),
-        );
-      });
-      return const Scaffold(
-        body: Center(child: Text('Not available for guests')),
-      );
-    }
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.settings),
+        title: Text(t.translate('settings')),
       ),
       body: ListView(
         children: [
-          ListTile(
-            leading: const Icon(Icons.brightness_medium),
-            title: Text(l10n.theme),
-            subtitle: Text(
-              themeProvider.useSystemTheme
-                  ? l10n.systemDefault
-                  : (isDarkMode ? l10n.darkTheme : l10n.lightTheme),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(
-                  icon: Icon(isDarkMode ? Icons.light_mode : Icons.dark_mode),
-                  onPressed: () {
-                    themeProvider.toggleTheme();
-                  },
-                  tooltip: isDarkMode ? l10n.lightTheme : l10n.darkTheme,
+                Row(
+                  children: [
+                    const Icon(Icons.brightness_medium),
+                    const SizedBox(width: 16),
+                    Text(
+                      t.translate('theme'),
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 8),
-                IconButton(
-                  icon: const Icon(Icons.settings_brightness),
-                  onPressed: () {
-                    themeProvider.useSystemSettings();
-                  },
-                  tooltip: l10n.systemDefault,
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: Icon(
+                        Icons.brightness_auto,
+                        color: themeProvider.useSystemTheme ? Theme.of(context).colorScheme.primary : null,
+                      ),
+                      tooltip: t.translate('systemDefault'),
+                      onPressed: () => themeProvider.useSystemSettings(),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.light_mode,
+                        color: themeProvider.themeMode == ThemeMode.light && !themeProvider.useSystemTheme ? Theme.of(context).colorScheme.primary : null,
+                      ),
+                      tooltip: t.translate('lightTheme'),
+                      onPressed: () => themeProvider.setThemeMode(ThemeMode.light),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        Icons.dark_mode,
+                        color: themeProvider.themeMode == ThemeMode.dark && !themeProvider.useSystemTheme ? Theme.of(context).colorScheme.primary : null,
+                      ),
+                      tooltip: t.translate('darkTheme'),
+                      onPressed: () => themeProvider.setThemeMode(ThemeMode.dark),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
           ListTile(
             leading: const Icon(Icons.language),
-            title: Text(l10n.language),
+            title: Text(t.translate('language')),
             subtitle: Text(
               localeProvider.useSystemLocale
-                  ? l10n.systemDefault
+                  ? t.translate('systemDefault')
                   : localeProvider.getLanguageName(localeProvider.currentLanguage),
             ),
             onTap: () {
               showDialog(
                 context: context,
                 builder: (context) => AlertDialog(
-                  title: Text(l10n.selectLanguage),
+                  title: Text(t.translate('selectLanguage')),
                   content: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       ListTile(
                         leading: const Icon(Icons.settings_brightness),
-                        title: Text(l10n.systemDefault),
+                        title: Text(Provider.of<LocaleProvider>(context).translations.translate('systemDefault')),
                         onTap: () {
                           localeProvider.useSystemSettings();
                           Navigator.pop(context);
@@ -89,7 +94,7 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       ListTile(
                         leading: const Text('🇺🇸'),
-                        title: const Text('English'),
+                        title: Text(Provider.of<LocaleProvider>(context).translations.translate('english')),
                         onTap: () {
                           localeProvider.setLocale(const Locale('en'));
                           Navigator.pop(context);
@@ -97,7 +102,7 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       ListTile(
                         leading: const Text('🇷🇺'),
-                        title: const Text('Русский'),
+                        title: Text(Provider.of<LocaleProvider>(context).translations.translate('russian')),
                         onTap: () {
                           localeProvider.setLocale(const Locale('ru'));
                           Navigator.pop(context);
@@ -105,7 +110,7 @@ class SettingsScreen extends StatelessWidget {
                       ),
                       ListTile(
                         leading: const Text('🇰🇿'),
-                        title: const Text('Қазақша'),
+                        title: Text(Provider.of<LocaleProvider>(context).translations.translate('kazakh')),
                         onTap: () {
                           localeProvider.setLocale(const Locale('kk'));
                           Navigator.pop(context);

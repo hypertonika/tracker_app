@@ -3,38 +3,51 @@ import 'package:provider/provider.dart';
 import '../providers/transaction_provider.dart';
 import '../providers/theme_provider.dart';
 import '../models/transaction.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
-import 'settings_screen.dart';
+import '../l10n/translations.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../services/connectivity_service.dart';
 import '../services/offline_storage_service.dart';
+import 'package:uuid/uuid.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, required this.isGuest});
+
+  final bool isGuest;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  DateTime _selectedDate = DateTime.now();
   final _formKey = GlobalKey<FormState>();
+  final _titleController = TextEditingController();
+  final _amountController = TextEditingController();
+  String? _selectedCategory;
   bool _isChartExpanded = false;
+  DateTime _selectedDate = DateTime.now();
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _amountController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
+    final t = Translations.of(context);
     final themeProvider = context.watch<ThemeProvider>();
     final isSystemTheme = themeProvider.useSystemTheme;
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final user = FirebaseAuth.instance.currentUser;
     final connectivityService = context.read<ConnectivityService>();
     final offlineStorageService = OfflineStorageService();
+    final isGuest = widget.isGuest;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(l10n.appTitle),
+        title: Text(t.translate('appTitle')),
         actions: [
           IconButton(
             icon: Icon(
@@ -46,8 +59,8 @@ class _HomeScreenState extends State<HomeScreen> {
               themeProvider.toggleTheme();
             },
             tooltip: isSystemTheme
-                ? 'Using system theme'
-                : (isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'),
+                ? t.translate('systemDefault')
+                : (isDarkMode ? t.translate('lightTheme') : t.translate('darkTheme')),
           ),
           if (!isSystemTheme)
             IconButton(
@@ -55,38 +68,30 @@ class _HomeScreenState extends State<HomeScreen> {
               onPressed: () {
                 themeProvider.useSystemSettings();
               },
-              tooltip: 'Use system theme',
+              tooltip: t.translate('systemDefault'),
             ),
-          IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-            },
-            tooltip: l10n.settings,
-          ),
           StreamBuilder<bool>(
             stream: connectivityService.connectionStatus,
             builder: (context, snapshot) {
               final isConnected = snapshot.data ?? false;
               return IconButton(
                 icon: Icon(isConnected ? Icons.cloud_done : Icons.cloud_off),
-                onPressed: () {
+                onPressed: () async {
                   if (isConnected) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Syncing data...')),
+                    if (!mounted) return;
+                    final scaffoldMessenger = ScaffoldMessenger.of(context);
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(content: Text(t.translate('syncingData'))),
                     );
-                    offlineStorageService.syncWithFirestore('user_id').then((_) {
-                      if (!mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Data synced successfully!')),
-                      );
-                    });
+                    await offlineStorageService.syncWithFirestore('user_id');
+                    if (!mounted) return;
+                    scaffoldMessenger.showSnackBar(
+                      SnackBar(content: Text(t.translate('dataSynced'))),
+                    );
                   } else {
+                    if (!mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('You are offline. Data will sync when connected.')),
+                      SnackBar(content: Text(t.translate('offlineMode'))),
                     );
                   }
                 },
@@ -98,14 +103,14 @@ class _HomeScreenState extends State<HomeScreen> {
       body: SafeArea(
         child: Column(
           children: [
-            if (user == null)
+            if (user == null && isGuest)
               MaterialBanner(
-                content: Text('Guest Mode: Please log in for full access.'),
+                content: Text(t.translate('guestMode')),
                 backgroundColor: Colors.amber,
                 actions: [
                   TextButton(
                     onPressed: () => Navigator.pushNamed(context, '/login'),
-                    child: Text('Login'),
+                    child: Text(t.translate('login')),
                   ),
                 ],
               ),
@@ -128,15 +133,15 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                _buildBalanceCard(l10n),
-                                _buildMonthSelector(l10n),
-                                if (!isSmallScreen) _buildSummaryChart(l10n),
+                                _buildBalanceCard(t),
+                                _buildMonthSelector(t),
+                                if (!isSmallScreen) _buildSummaryChart(t),
                               ],
                             ),
                           ),
                         ),
                         Expanded(
-                          child: _buildRecentTransactions(l10n),
+                          child: _buildRecentTransactions(t),
                         ),
                       ],
                     );
@@ -148,10 +153,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                _buildBalanceCard(l10n),
-                                _buildMonthSelector(l10n),
-                                if (screenHeight > 600) _buildSummaryChart(l10n),
-                                _buildRecentTransactions(l10n),
+                                _buildBalanceCard(t),
+                                _buildMonthSelector(t),
+                                if (screenHeight > 600) _buildSummaryChart(t),
+                                _buildRecentTransactions(t),
                               ],
                             ),
                           ),
@@ -201,7 +206,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () => _showAddTransactionDialog(context, TransactionType.income),
                   backgroundColor: Colors.green,
                   icon: const Icon(Icons.add),
-                  label: Text(l10n.income),
+                  label: Text(t.translate('income')),
                 ),
                 const SizedBox(width: 16),
                 FloatingActionButton.extended(
@@ -209,7 +214,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onPressed: () => _showAddTransactionDialog(context, TransactionType.expense),
                   backgroundColor: Colors.red,
                   icon: const Icon(Icons.remove),
-                  label: Text(l10n.expense),
+                  label: Text(t.translate('expense')),
                 ),
               ],
             );
@@ -219,7 +224,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildBalanceCard(AppLocalizations l10n) {
+  Widget _buildBalanceCard(Translations t) {
     final transactions = context.watch<TransactionProvider>().transactions;
     final balance = transactions.fold<double>(
       0,
@@ -245,7 +250,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    l10n.welcome,
+                    t.translate('welcome'),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
@@ -267,7 +272,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildMonthSelector(AppLocalizations l10n) {
+  Widget _buildMonthSelector(Translations t) {
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       child: ListTile(
@@ -293,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildSummaryChart(AppLocalizations l10n) {
+  Widget _buildSummaryChart(Translations t) {
     final transactions = context.watch<TransactionProvider>().transactions;
     final monthlyTransactions = transactions.where((t) =>
         t.date.year == _selectedDate.year && t.date.month == _selectedDate.month).toList();
@@ -315,7 +320,7 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              l10n.monthlySummary,
+              t.translate('monthlySummary'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
@@ -354,7 +359,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     )
                   : Center(
                       child: Text(
-                        l10n.noTransactions,
+                        t.translate('noTransactions'),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                     ),
@@ -363,8 +368,8 @@ class _HomeScreenState extends State<HomeScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildSummaryItem(l10n.income, income, Colors.green),
-                _buildSummaryItem(l10n.expense, expenses, Colors.red),
+                _buildSummaryItem(t.translate('income'), income, Colors.green),
+                _buildSummaryItem(t.translate('expense'), expenses, Colors.red),
               ],
             ),
           ],
@@ -395,7 +400,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildRecentTransactions(AppLocalizations l10n) {
+  Widget _buildRecentTransactions(Translations t) {
     final transactions = context.watch<TransactionProvider>().transactions;
     final monthlyTransactions = transactions.where((t) =>
         t.date.year == _selectedDate.year && t.date.month == _selectedDate.month).toList();
@@ -409,7 +414,7 @@ class _HomeScreenState extends State<HomeScreen> {
           Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
-              l10n.recentTransactions,
+              t.translate('recentTransactions'),
               style: Theme.of(context).textTheme.titleLarge,
             ),
           ),
@@ -418,7 +423,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   padding: const EdgeInsets.all(16),
                   child: Center(
                     child: Text(
-                      l10n.noTransactions,
+                      t.translate('noTransactions'),
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
@@ -503,15 +508,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _showAddTransactionDialog(BuildContext context, TransactionType type) {
-    final titleController = TextEditingController();
-    final amountController = TextEditingController();
-    String? selectedCategory;
-    final l10n = AppLocalizations.of(context)!;
+    final t = Translations.of(context);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${l10n.add} ${type == TransactionType.income ? l10n.income : l10n.expense}'),
+        title: Text('${t.translate('add')} ${type == TransactionType.income ? t.translate('income') : t.translate('expense')}'),
         content: SingleChildScrollView(
           child: Form(
             key: _formKey,
@@ -519,47 +521,47 @@ class _HomeScreenState extends State<HomeScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 TextFormField(
-                  controller: titleController,
-                  decoration: InputDecoration(labelText: l10n.title),
+                  controller: _titleController,
+                  decoration: InputDecoration(labelText: t.translate('title')),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return l10n.pleaseEnterTitle;
+                      return t.translate('pleaseEnterTitle');
                     }
                     return null;
                   },
                 ),
                 TextFormField(
-                  controller: amountController,
+                  controller: _amountController,
                   decoration: InputDecoration(
-                    labelText: l10n.amount,
+                    labelText: t.translate('amount'),
                     prefixText: '₸ ',
                   ),
                   keyboardType: const TextInputType.numberWithOptions(decimal: true),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return l10n.pleaseEnterAmount;
+                      return t.translate('pleaseEnterAmount');
                     }
                     final amount = double.tryParse(value);
                     if (amount == null) {
-                      return l10n.pleaseEnterValidNumber;
+                      return t.translate('pleaseEnterValidNumber');
                     }
                     if (amount <= 0) {
-                      return l10n.amountMustBeGreaterThanZero;
+                      return t.translate('amountMustBeGreaterThanZero');
                     }
                     return null;
                   },
                 ),
                 const SizedBox(height: 16),
                 DropdownButtonFormField<String>(
-                  decoration: InputDecoration(labelText: l10n.category),
-                  value: selectedCategory,
+                  decoration: InputDecoration(labelText: t.translate('category')),
+                  value: _selectedCategory,
                   items: [
-                    l10n.food,
-                    l10n.transport,
-                    l10n.shopping,
-                    l10n.bills,
-                    l10n.entertainment,
-                    l10n.salary,
+                    t.translate('food'),
+                    t.translate('transport'),
+                    t.translate('shopping'),
+                    t.translate('bills'),
+                    t.translate('entertainment'),
+                    t.translate('salary'),
                   ].map((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
@@ -568,12 +570,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   }).toList(),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return l10n.pleaseSelectCategory;
+                      return t.translate('pleaseSelectCategory');
                     }
                     return null;
                   },
                   onChanged: (String? newValue) {
-                    selectedCategory = newValue;
+                    setState(() {
+                      _selectedCategory = newValue;
+                    });
                   },
                 ),
               ],
@@ -583,31 +587,49 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text(l10n.cancel),
+            child: Text(t.translate('cancel')),
           ),
           TextButton(
             onPressed: () {
-              if (_formKey.currentState!.validate() && selectedCategory != null) {
-                final title = titleController.text;
-                final amount = double.parse(amountController.text);
-
-                final transaction = Transaction(
-                  id: DateTime.now().toString(),
-                  title: title,
-                  amount: amount,
-                  date: DateTime.now(),
-                  type: type,
-                  category: selectedCategory,
-                );
-
-                context.read<TransactionProvider>().addTransaction(transaction);
-                Navigator.pop(context);
+              if (_formKey.currentState!.validate()) {
+                _addTransaction(type);
               }
             },
-            child: Text(l10n.add),
+            child: Text(t.translate('add')),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _addTransaction(TransactionType type) async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final title = _titleController.text;
+    final amount = double.parse(_amountController.text);
+    final category = _selectedCategory;
+
+    final transactionId = const Uuid().v4();
+
+    final transaction = Transaction(
+      id: transactionId,
+      title: title,
+      amount: type == TransactionType.expense ? -amount : amount,
+      category: category,
+      date: DateTime.now(),
+      type: type,
+    );
+
+    final provider = Provider.of<TransactionProvider>(context, listen: false);
+    provider.addTransaction(transaction);
+
+    if (!mounted) return;
+
+    _titleController.clear();
+    _amountController.clear();
+    setState(() {
+      _selectedCategory = null;
+    });
+    Navigator.pop(context);
   }
 } 
