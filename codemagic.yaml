@@ -15,9 +15,9 @@ workflows:
         script: |
           cd ios
           pod install
-      - name: Build iOS simulator app
+      - name: Build iOS simulator app (verbose)
         script: |
-          flutter build ios --simulator
+          flutter build ios --simulator --verbose
       # Удаляем шаг генерации локализации
       # - name: Generate localization files
       #   script: |
