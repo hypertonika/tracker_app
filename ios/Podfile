@@ -58,11 +58,20 @@ post_install do |installer|
         # Add Flutter include paths to sqflite_darwin target
         if target.name == 'sqflite_darwin'
           config.build_settings['HEADER_SEARCH_PATHS'] ||= '$(inherited)'
-          config.build_settings['HEADER_SEARCH_PATHS'] = "$(inherited) ${PODS_ROOT}/Flutter"
+          config.build_settings['HEADER_SEARCH_PATHS'] = "$(inherited) ${PODS_ROOT}/Flutter ${PODS_ROOT}/Headers/Public/Flutter"
           config.build_settings['OTHER_CFLAGS'] ||= '$(inherited)'
-          config.build_settings['OTHER_CFLAGS'] = "$(inherited) -I${PODS_ROOT}/Flutter"
+          config.build_settings['OTHER_CFLAGS'] = "$(inherited) -I${PODS_ROOT}/Flutter -I${PODS_ROOT}/Headers/Public/Flutter"
           config.build_settings['OTHER_CPLUSPLUSFLAGS'] ||= '$(inherited)'
-          config.build_settings['OTHER_CPLUSPLUSFLAGS'] = "$(inherited) -I${PODS_ROOT}/Flutter"
+          config.build_settings['OTHER_CPLUSPLUSFLAGS'] = "$(inherited) -I${PODS_ROOT}/Flutter -I${PODS_ROOT}/Headers/Public/Flutter"
+        end
+
+        # Fix for symlinks warning
+        if target.respond_to?(:shell_script_build_phases)
+          target.shell_script_build_phases.each do |phase|
+            if phase.name == 'Create Symlinks to Header Folders'
+              phase.always_out_of_date = "1"
+            end
+          end
         end
       end
     end
