@@ -46,6 +46,7 @@ post_install do |installer|
 
         # Exclude arm64 for simulator to fix build on Apple Silicon
         config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
+        
         # You can enable the permissions needed here
         config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
           '$(inherited)',
@@ -57,13 +58,12 @@ post_install do |installer|
         # Add Flutter include paths to sqflite_darwin target
         if target.name == 'sqflite_darwin'
           config.build_settings['HEADER_SEARCH_PATHS'] ||= '$(inherited)'
-          config.build_settings['HEADER_SEARCH_PATHS'] = "$(inherited) \"${PODS_ROOT}/Flutter/\""
+          config.build_settings['HEADER_SEARCH_PATHS'] = "$(inherited) ${PODS_ROOT}/Flutter"
           config.build_settings['OTHER_CFLAGS'] ||= '$(inherited)'
-          config.build_settings['OTHER_CFLAGS'] = "$(inherited) -I\"${PODS_ROOT}/Flutter/\""
+          config.build_settings['OTHER_CFLAGS'] = "$(inherited) -I${PODS_ROOT}/Flutter"
           config.build_settings['OTHER_CPLUSPLUSFLAGS'] ||= '$(inherited)'
-          config.build_settings['OTHER_CPLUSPLUSFLAGS'] = "$(inherited) -I\"${PODS_ROOT}/Flutter/\""
+          config.build_settings['OTHER_CPLUSPLUSFLAGS'] = "$(inherited) -I${PODS_ROOT}/Flutter"
         end
-
       end
     end
   end
@@ -84,13 +84,6 @@ post_install do |installer|
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'OPENSSL_NO_ASM=1'
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'].uniq
-
-      # Disable all warnings (reverting to previous state)
-      # config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
-      # config.build_settings['CLANG_WARN_DOCUMENTATION_COMMENTS'] = 'NO'
-      # config.build_settings['CLANG_WARN_STRICT_PROTOTYPES'] = 'NO'
-      # config.build_settings['CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF'] = 'NO'
-      # config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
     end
 
     # Fix for BoringSSL-GRPC compilation by removing -G flag from source files
