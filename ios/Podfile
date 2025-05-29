@@ -60,6 +60,34 @@ post_install do |installer|
         config.build_settings['CLANG_WARN_STRICT_PROTOTYPES'] = 'NO'
         config.build_settings['CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF'] = 'NO'
         config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+
+        # Add a run script phase to remove the -G flag from the response file
+        script = <<-SCRIPT
+          BUILD_DIR="${BUILD_DIR}"
+          TARGET_TEMP_DIR="${TARGET_TEMP_DIR}"
+          RESP_FILE_DIR="${TARGET_TEMP_DIR}/Objects-normal/x86_64"
+          RESP_FILE_PATTERN="*-common-args.resp"
+
+          find "${RESP_FILE_DIR}" -name "${RESP_FILE_PATTERN}" -print0 | while IFS= read -r -d $'\0' resp_file;
+          do
+            echo "Processing response file: ${resp_file}"
+            # Use awk to remove the -G option
+            # -v RS='[[:space:]]+' sets the record separator to one or more whitespace characters
+            # -v ORS=' ' sets the output record separator to a single space
+            # $1 != "-G" prints any field that is not exactly "-G"
+            # 1 forces awk to print the line if there are no fields (i.e. empty lines after processing)
+            awk -v RS='[[:space:]]+' -v ORS=' ' '/$1 != "-G"/{print $1}' "${resp_file}" > "${resp_file}.tmp" && mv "${resp_file}.tmp" "${resp_file}"
+            echo "Finished processing response file: ${resp_file}"
+          done
+        SCRIPT
+
+        target.shell_script_phases.each do |shell_script_phase|
+          if shell_script_phase.name == "Compile Sources"
+            shell_script_phase.script = script + shell_script_phase.script
+            break
+          end
+        end
+
       end
     end
 
