@@ -41,6 +41,13 @@ post_install do |installer|
     # Устанавливаем минимальную версию развертывания iOS для всех таргетов подов на 13.0
     target.build_configurations.each do |config|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      
+      # Fix for BoringSSL-GRPC compilation
+      if target.name == 'BoringSSL-GRPC'
+        config.build_settings['GCC_OPTIMIZATION_LEVEL'] = '0'
+        config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
+        config.build_settings['OTHER_CFLAGS'] = '$(inherited) -Wno-shorten-64-to-32'
+      end
     end
 
     # Start of the permission-specific settings
