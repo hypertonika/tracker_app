@@ -35,6 +35,9 @@ target 'Runner' do
 end
 
 post_install do |installer|
+  # Define the BoringSSL-GRPC target variable
+  boringssl_grpc_target = nil
+
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
     
@@ -42,68 +45,12 @@ post_install do |installer|
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
     end
 
-    # Fix for BoringSSL-GRPC compilation
+    # Find the BoringSSL-GRPC target
     if target.name == 'BoringSSL-GRPC'
-      target.build_configurations.each do |config|
-        # Reset all compiler flags and add only necessary ones
-        config.build_settings['OTHER_CFLAGS'] = '-Wno-shorten-64-to-32 -Wno-error=implicit-function-declaration -Wno-everything'
-        config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '-Wno-shorten-64-to-32 -Wno-error=implicit-function-declaration -Wno-everything'
-        config.build_settings['GCC_OPTIMIZATION_LEVEL'] = '0'
-        config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
-        
-        # Add necessary preprocessor definitions
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'OPENSSL_NO_ASM=1'
-        config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'].uniq
-
-        # Disable all warnings
-        config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
-        config.build_settings['CLANG_WARN_DOCUMENTATION_COMMENTS'] = 'NO'
-        config.build_settings['CLANG_WARN_STRICT_PROTOTYPES'] = 'NO'
-        config.build_settings['CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF'] = 'NO'
-        config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
-      end
-
-      # Add a run script phase to remove the -G flag from the response file
-      script = <<-SCRIPT
-        BUILD_DIR="${BUILD_DIR}"
-        TARGET_TEMP_DIR="${TARGET_TEMP_DIR}"
-        RESP_FILE_DIR="${TARGET_TEMP_DIR}/Objects-normal/x86_64"
-        RESP_FILE_PATTERN="*-common-args.resp"
-
-        find "${RESP_FILE_DIR}" -name "${RESP_FILE_PATTERN}" -print0 | while IFS= read -r -d $'\0' resp_file;
-        do
-          echo "Processing response file: ${resp_file}"
-          # Use awk to remove the -G option
-          # -v RS='[[:space:]]+' sets the record separator to one or more whitespace characters
-          # -v ORS=' ' sets the output record separator to a single space
-          # $1 != "-G" prints any field that is not exactly "-G"
-          # 1 forces awk to print the line if there are no fields (i.e. empty lines after processing)
-          awk -v RS='[[:space:]]+' -v ORS=' ' '/$1 != "-G"/{print $1}' "${resp_file}" > "${resp_file}.tmp" && mv "${resp_file}.tmp" "${resp_file}"
-          echo "Finished processing response file: ${resp_file}"
-        done
-      SCRIPT
-
-      # Find the "Compile Sources" phase and add the script
-      compile_sources_phase = target.shell_script_phases.find { |phase| phase.name == "Compile Sources" }
-      if compile_sources_phase
-        compile_sources_phase.script = script + compile_sources_phase.script
-      end
-
+      boringssl_grpc_target = target
     end
 
-    # Fix for BoringSSL-GRPC compilation by removing -G flag from source files
-    if target.name == 'BoringSSL-GRPC'
-      target.source_build_phase.files.each do |file|
-        if file.settings && file.settings['COMPILER_FLAGS']
-          flags = file.settings['COMPILER_FLAGS'].split(' ')
-          flags.reject! { |flag| flag == '-G' }
-          file.settings['COMPILER_FLAGS'] = flags.join(' ')
-        end
-      end
-    end
-
-    # Start of the permission-specific settings
+    # Start of the permission-specific settings (apply to all targets)
     target.build_configurations.each do |config|
       # Exclude arm64 for simulator to fix build on Apple Silicon
       config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
@@ -114,6 +61,60 @@ post_install do |installer|
         'PERMISSION_PHOTOS=1',
         'PERMISSION_LOCATION=1',
       ]
+    end
+  end
+
+  # Apply fixes specifically to the BoringSSL-GRPC target if found
+  if boringssl_grpc_target
+    boringssl_grpc_target.build_configurations.each do |config|
+      # Reset all compiler flags and add only necessary ones
+      config.build_settings['OTHER_CFLAGS'] = '-Wno-shorten-64-to-32 -Wno-error=implicit-function-declaration -Wno-everything'
+      config.build_settings['OTHER_CPLUSPLUSFLAGS'] = '-Wno-shorten-64-to-32 -Wno-error=implicit-function-declaration -Wno-everything'
+      config.build_settings['GCC_OPTIMIZATION_LEVEL'] = '0'
+      config.build_settings['COMPILER_INDEX_STORE_ENABLE'] = 'NO'
+
+      # Add necessary preprocessor definitions
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= ['$(inherited)']
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] << 'OPENSSL_NO_ASM=1'
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'].uniq
+
+      # Disable all warnings
+      config.build_settings['GCC_WARN_INHIBIT_ALL_WARNINGS'] = 'YES'
+      config.build_settings['CLANG_WARN_DOCUMENTATION_COMMENTS'] = 'NO'
+      config.build_settings['CLANG_WARN_STRICT_PROTOTYPES'] = 'NO'
+      config.build_settings['CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF'] = 'NO'
+      config.build_settings['CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER'] = 'NO'
+    end
+
+    # Add a run script phase to remove the -G flag from the response file
+    script = <<-SCRIPT
+      BUILD_DIR="${BUILD_DIR}"
+      TARGET_TEMP_DIR="${TARGET_TEMP_DIR}"
+      RESP_FILE_DIR="${TARGET_TEMP_DIR}/Objects-normal/x86_64"
+      RESP_FILE_PATTERN="*-common-args.resp"
+
+      find "${RESP_FILE_DIR}" -name "${RESP_FILE_PATTERN}" -print0 | while IFS= read -r -d $'\0' resp_file;
+      do
+        echo "Processing response file: ${resp_file}"
+        # Use awk to remove the -G option
+        awk -v RS='[[:space:]]+' -v ORS=' ' '/$1 != "-G"/{print $1}' "${resp_file}" > "${resp_file}.tmp" && mv "${resp_file}.tmp" "${resp_file}"
+        echo "Finished processing response file: ${resp_file}"
+      done
+    SCRIPT
+
+    # Find the "Compile Sources" phase and add the script
+    compile_sources_phase = boringssl_grpc_target.shell_script_phases.find { |phase| phase.name == "Compile Sources" }
+    if compile_sources_phase
+      compile_sources_phase.script = script + compile_sources_phase.script
+    end
+
+    # Fix for BoringSSL-GRPC compilation by removing -G flag from source files
+    boringssl_grpc_target.source_build_phase.files.each do |file|
+      if file.settings && file.settings['COMPILER_FLAGS']
+        flags = file.settings['COMPILER_FLAGS'].split(' ')
+        flags.reject! { |flag| flag == '-G' }
+        file.settings['COMPILER_FLAGS'] = flags.join(' ')
+      end
     end
   end
 end 
