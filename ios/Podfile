@@ -35,14 +35,15 @@ target 'Runner' do
 end
 
 post_install do |installer|
-  # Apply general settings to all targets that are PBXNativeTarget
+  # Apply general settings to all targets
   installer.pods_project.targets.each do |target|
-    # Only apply settings to native targets
-    if target.is_a?(Xcodeproj::Project::Object::PBXNativeTarget)
-      flutter_additional_ios_build_settings(target)
+    target.build_configurations.each do |config|
+      # Set deployment target for all targets
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
 
-      target.build_configurations.each do |config|
-        config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '13.0'
+      # Only apply additional settings to native targets
+      if target.is_a?(Xcodeproj::Project::Object::PBXNativeTarget)
+        flutter_additional_ios_build_settings(target)
 
         # Exclude arm64 for simulator to fix build on Apple Silicon
         config.build_settings['EXCLUDED_ARCHS[sdk=iphonesimulator*]'] = 'arm64'
